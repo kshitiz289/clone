@@ -1,486 +1,504 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>InstaChatTube — Demo (HTML/CSS/JS only)</title>
-  <style>
-    :root{
-      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#ff4d6d; --glass: rgba(255,255,255,0.03);
-      --ui-pad:12px; --radius:12px; --gap:12px; --maxw:1100px
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:linear-gradient(180deg,#071021 0%, #081427 100%); color:#e6eef6; display:flex; justify-content:center; padding:20px;
-    }
-    .app{width:100%; max-width:var(--maxw); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:18px; box-shadow:0 8px 40px rgba(2,6,23,0.7); overflow:hidden; display:grid; grid-template-columns:320px 1fr; min-height:650px}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>InstaChatTube — Polished (Firestore)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#071026; --card:#0c1724; --muted:#9fb0c4; --accent:#3dd6c5; --accent-2:#7c5cff;
+    --glass:rgba(255,255,255,0.03); --radius:14px; --gap:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background: linear-gradient(180deg,#051121 0%, #07172a 100%);
+    color:#eaf6ff; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
 
-    /* Sidebar */
-    .sidebar{padding:18px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-right:1px solid rgba(255,255,255,0.03)}
-    .brand{display:flex; align-items:center; gap:12px; margin-bottom:18px}
-    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#ff7a9a,#6ecbff); display:flex; align-items:center; justify-content:center; font-weight:700}
-    .nav{display:flex;flex-direction:column; gap:8px}
-    .nav button{background:transparent; border:0; color:var(--muted); padding:10px 12px; text-align:left; border-radius:10px; cursor:pointer}
-    .nav button.active{background:var(--glass); color:white}
-    .sidebar .profile{margin-top:18px; display:flex; gap:12px; align-items:center}
-    .avatar{width:52px;height:52px;border-radius:12px;background:#123;background-size:cover}
+  /* App shell */
+  .app{
+    width:100%; max-width:1200px; height:86vh; border-radius:18px; overflow:hidden;
+    display:grid; grid-template-columns:320px 1fr; box-shadow:0 20px 60px rgba(2,6,23,0.7);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.03);
+  }
 
-    /* Main content */
-    .main{padding:18px}
-    header.app-header{display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:18px}
-    .search{flex:1; margin-left:12px}
-    .search input{width:100%; padding:10px 12px; border-radius:999px; border:0; background:rgba(255,255,255,0.02); color:var(--muted)}
+  /* Sidebar */
+  .sidebar{
+    padding:18px; border-right:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; gap:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  }
+  .brand{display:flex; gap:12px; align-items:center}
+  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--accent-2),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06202a}
+  .brand h1{font-size:16px;margin:0}
+  .brand p{margin:0;color:var(--muted);font-size:12px}
 
-    /* Feed */
-    .feed{display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:12px}
-    .post{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.02)}
-    .post .media{width:100%; height:180px; border-radius:8px; background:#021; display:flex; align-items:center; justify-content:center; overflow:hidden}
-    .post img, .post video{width:100%; height:100%; object-fit:cover}
-    .post .meta{margin-top:8px}
-    .actions{display:flex; gap:8px; margin-top:6px; align-items:center}
-    .btn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:8px;border-radius:8px}
-    .like-count{font-size:13px;color:var(--muted)}
+  .controls{display:flex;flex-direction:column;gap:8px}
+  .btn{padding:10px;border-radius:10px;border:0;background:transparent;color:var(--muted);text-align:left;cursor:pointer}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#02171a; font-weight:600}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.03);}
 
-    /* Upload */
-    .upload-panel{max-width:760px}
-    .uform{display:grid; gap:8px}
-    textarea{min-height:80px; padding:8px; border-radius:8px; background:rgba(255,255,255,0.02); border:0; color:var(--muted)}
+  .rooms{display:flex;flex-direction:column; gap:8px; margin-top:6px; overflow:auto; padding-right:6px}
+  .room{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;color:var(--muted);background:transparent;border:0}
+  .room.active{background:var(--glass); color:#fff}
+  .room .dot{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2f8f9c,#4fb7df);display:flex;align-items:center;justify-content:center;font-weight:700;color:#02171a}
 
-    /* Chat */
-    .chat{display:flex; flex-direction:column; height:580px}
-    .contacts{padding:8px; border-bottom:1px solid rgba(255,255,255,0.02)}
-    .contacts button{display:flex; gap:10px; align-items:center; width:100%; padding:8px; background:transparent; border:0; color:var(--muted); cursor:pointer}
-    .messages{flex:1; padding:12px; overflow:auto}
-    .msg{max-width:70%; margin-bottom:8px; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.02)}
-    .msg.me{margin-left:auto; background:linear-gradient(90deg,#0b806f,#0ea5a0)}
-    .chat-input{display:flex; gap:8px; padding:8px; border-top:1px solid rgba(255,255,255,0.02)}
-    .chat-input input{flex:1; padding:8px; border-radius:8px; border:0; background:rgba(255,255,255,0.02); color:var(--muted)}
+  .sidebar .small{font-size:12px;color:var(--muted);margin-top:auto}
 
-    /* Misc */
-    .hidden{display:none}
-    footer.note{padding:12px; color:var(--muted); font-size:13px; text-align:center}
+  /* Content area */
+  .content{display:flex;flex-direction:column;padding:18px;gap:12px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .search{flex:1;display:flex;gap:12px;align-items:center}
+  .search input{flex:1;padding:12px;border-radius:999px;border:0;background:rgba(255,255,255,0.02);color:var(--muted)}
+  .actions{display:flex;gap:8px;align-items:center}
 
-    /* Responsive */
-    @media (max-width:920px){
-      .app{grid-template-columns:1fr;}
-      .sidebar{display:flex; gap:8px; overflow:auto}
-    }
-  </style>
+  /* Main layout: left chat + right feed/mini player */
+  .main-grid{display:grid;grid-template-columns:45% 55%; gap:12px; align-items:start; flex:1; min-height:0}
+  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01)); border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.02); min-height:0}
+
+  /* Chat panel */
+  .chat-header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#7c5cff,#3dd6c5);display:flex;align-items:center;justify-content:center;font-weight:700;color:#02171a}
+  .status{font-size:13px;color:var(--muted)}
+  .messages{height:58vh;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg, rgba(0,0,0,0.01), rgba(0,0,0,0.02)); border-radius:10px}
+  .msg{max-width:74%;padding:10px;border-radius:12px;background:rgba(255,255,255,0.02);color:var(--muted); font-size:14px; box-shadow:0 2px 8px rgba(3,6,14,0.4)}
+  .msg.me{margin-left:auto;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#02171a}
+  .msg .meta{font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px}
+
+  .chat-footer{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .chat-footer input[type="text"]{flex:1;padding:12px;border-radius:999px;border:0;background:rgba(255,255,255,0.02);color:var(--muted)}
+  .chat-footer input[type="url"]{width:320px;padding:10px;border-radius:10px;border:0;background:rgba(255,255,255,0.02);color:var(--muted)}
+
+  /* Feed panel */
+  .feed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .post{border-radius:12px;overflow:hidden;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.02); display:flex;flex-direction:column}
+  .post .media{height:160px;display:flex;align-items:center;justify-content:center;background:#050b10}
+  .post .meta{padding:10px}
+  .post h4{margin:0 0 6px 0}
+  .post p{margin:0;color:var(--muted);font-size:13px}
+
+  /* Floating player */
+  .mini-player{position:fixed;right:30px;bottom:30px;width:300px;background:linear-gradient(180deg,#081223,#07121b);border-radius:12px;padding:8px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 12px 40px rgba(2,6,23,0.7);display:flex;gap:8px;align-items:center}
+  .mini-player video{width:140px;height:80px;border-radius:8px;object-fit:cover}
+  .mini-player .controls{display:flex;flex-direction:column;gap:6px}
+
+  /* small helpers */
+  .muted{color:var(--muted);font-size:13px}
+  .hidden{display:none}
+
+  /* responsive */
+  @media (max-width:980px){
+    .app{grid-template-columns:1fr; height:95vh}
+    .main-grid{grid-template-columns:1fr}
+    .mini-player{right:14px;bottom:14px;width:260px}
+  }
+
+  /* small animations */
+  .btn, .room { transition: all 160ms cubic-bezier(.2,.9,.2,1) }
+  .post:hover{transform:translateY(-4px); transition: transform 180ms ease}
+</style>
 </head>
 <body>
-  <div class="app" id="app">
+  <div class="app">
     <aside class="sidebar">
       <div class="brand">
         <div class="logo">ICT</div>
         <div>
-          <div style="font-weight:700">InstaChatTube</div>
-          <div style="font-size:12px;color:var(--muted)">Local demo • HTML/CSS/JS</div>
-        </div>
-      </div>
-      <nav class="nav">
-        <button data-route="feed" class="active">Feed</button>
-        <button data-route="upload">Upload</button>
-        <button data-route="chat">Chat</button>
-        <button data-route="profile">Profile</button>
-        <button data-route="video">Video Player</button>
-      </nav>
-
-      <div style="margin-top:18px">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Quick actions</div>
-        <button id="exportBtn" class="btn">Export data</button>
-        <button id="importBtn" class="btn">Import data</button>
-        <input id="importFile" type="file" accept="application/json" class="hidden">
-      </div>
-
-      <div class="profile">
-        <div class="avatar" id="sidebarAvatar" style="background-image: url('');"></div>
-        <div>
-          <div id="username">You</div>
-          <div style="font-size:12px;color:var(--muted)">Local account</div>
+          <h1>InstaChatTube</h1>
+          <p>Realtime demo • Firestore</p>
         </div>
       </div>
 
-      <footer class="note">This is an offline demo — posts are stored in your browser (IndexedDB). To share data, use Export/Import.</footer>
+      <div class="controls">
+        <button class="btn primary" id="newRoomBtn">+ Create Room</button>
+        <button class="btn ghost" id="openFeedBtn">Open Feed</button>
+        <button class="btn" id="openChatBtn">Open Chat</button>
+      </div>
+
+      <div style="margin-top:6px">
+        <div class="muted" style="font-size:13px;margin-bottom:8px">Rooms</div>
+        <div class="rooms" id="rooms"></div>
+      </div>
+
+      <div class="small">Your id: <span id="myId" style="font-weight:700"></span></div>
+      <div class="small" style="margin-top:auto">Tip: paste public image or YouTube URLs when creating posts.</div>
     </aside>
 
-    <main class="main">
-      <header class="app-header">
-        <div style="display:flex;align-items:center;">
-          <h2 style="margin:0">InstaChatTube</h2>
-          <div class="search" style="margin-left:18px"><input id="searchInput" placeholder="Search captions or tags..."></div>
+    <section class="content">
+      <div class="topbar">
+        <div class="search">
+          <input id="globalSearch" placeholder="Search feed or chat..." />
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button id="newUpload" class="btn">New upload</button>
-          <button id="clearAll" class="btn">Clear all</button>
+        <div class="actions">
+          <div class="muted" id="statusText">Connecting...</div>
         </div>
-      </header>
+      </div>
 
-      <!-- Feed -->
-      <section id="page-feed">
-        <div class="feed" id="feed"></div>
-      </section>
-
-      <!-- Upload -->
-      <section id="page-upload" class="hidden">
-        <div class="upload-panel">
-          <h3>Upload image or short video</h3>
-          <div class="uform">
-            <input id="fileInput" type="file" accept="image/*,video/*">
-            <input id="titleInput" placeholder="Title (optional)">
-            <textarea id="captionInput" placeholder="Write a caption..."></textarea>
-            <input id="tagsInput" placeholder="Tags (comma separated)">
-            <div style="display:flex;gap:8px">
-              <button id="savePost" class="btn">Save post</button>
-              <button id="previewBtn" class="btn">Preview</button>
-            </div>
-            <div id="previewArea"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Chat -->
-      <section id="page-chat" class="hidden">
-        <div class="chat">
-          <div class="contacts">
-            <button id="newConv">+ New Conversation</button>
-          </div>
-          <div class="messages" id="messages"></div>
-          <div class="chat-input">
-            <input id="chatText" placeholder="Type a message...">
-            <button id="sendMsg" class="btn">Send</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Profile -->
-      <section id="page-profile" class="hidden">
-        <h3>Profile</h3>
-        <div style="display:flex;gap:12px;align-items:center">
-          <div class="avatar" id="profileAvatar" style="width:96px;height:96px"></div>
-          <div>
-            <input id="nameInput" placeholder="Your name">
-            <div style="margin-top:8px">
-              <button id="saveProfile" class="btn">Save</button>
+      <div class="main-grid">
+        <!-- CHAT PANEL -->
+        <div class="panel" style="display:flex;flex-direction:column;min-height:0">
+          <div class="chat-header">
+            <div class="avatar" id="roomAvatar">G</div>
+            <div>
+              <div id="roomTitle" style="font-weight:700">general</div>
+              <div class="status" id="roomSubtitle">Realtime chat • anonymous</div>
             </div>
           </div>
+
+          <div class="messages panel-body" id="messages" style="flex:1;min-height:0"></div>
+
+          <div class="chat-footer">
+            <input id="msgInput" type="text" placeholder="Type a message..." />
+            <input id="attachUrl" type="url" placeholder="Attachment URL (optional: image / youtube)" />
+            <button id="sendBtn" class="btn primary">Send</button>
+          </div>
         </div>
 
-        <h4 style="margin-top:18px">Your posts</h4>
-        <div id="myPosts" class="feed"></div>
-      </section>
+        <!-- FEED PANEL -->
+        <div class="panel">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <h3 style="margin:0">Global Feed</h3>
+              <div class="muted" style="margin-top:4px;font-size:13px">Shared URLs — images or YouTube embeds</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="postUrl" placeholder="Media URL or YouTube/watch URL" style="padding:8px;border-radius:8px;border:0;background:rgba(255,255,255,0.02);color:var(--muted);width:260px">
+              <button id="createPost" class="btn primary">Post</button>
+            </div>
+          </div>
 
-      <!-- Video Player -->
-      <section id="page-video" class="hidden">
-        <h3>Video Player</h3>
-        <div id="playerWrap">
-          <video id="player" controls style="width:100%;max-height:480px;background:black"></video>
+          <div id="feed" class="feed-grid"></div>
         </div>
-      </section>
-
-    </main>
+      </div>
+    </section>
   </div>
 
-  <script>
-  // ---------------------- Basic SPA router ----------------------
-  const routes = ['feed','upload','chat','profile','video'];
-  document.querySelectorAll('.nav button').forEach(btn=> btn.addEventListener('click',e=>{
-    const r = btn.dataset.route; navigate(r);
-  }));
-  function navigate(route){
-    routes.forEach(r=> document.getElementById('page-'+r).classList.add('hidden'));
-    document.getElementById('page-'+route).classList.remove('hidden');
-    document.querySelectorAll('.nav button').forEach(b=> b.classList.toggle('active', b.dataset.route===route));
-  }
+  <!-- floating mini player -->
+  <div class="mini-player hidden" id="miniPlayer">
+    <video id="miniVideo" playsinline muted></video>
+    <div class="controls">
+      <div id="miniTitle" style="font-weight:700;font-size:13px">Now playing</div>
+      <div style="display:flex;gap:8px">
+        <button id="miniClose" class="btn ghost">Close</button>
+      </div>
+    </div>
+  </div>
 
-  // default
-  navigate('feed');
+  <!-- Firebase compat libs (single-file friendly) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-  // ---------------------- IndexedDB helpers ----------------------
-  function openDB(name='ictDB', version=1){
-    return new Promise((res,rej)=>{
-      const rq = indexedDB.open(name,version);
-      rq.onupgradeneeded = e=>{
-        const db = e.target.result;
-        if(!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
-        if(!db.objectStoreNames.contains('posts')) db.createObjectStore('posts',{keyPath:'id'});
-        if(!db.objectStoreNames.contains('messages')) db.createObjectStore('messages',{keyPath:'id'});
-        if(!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
-      }
-      rq.onsuccess = ()=> res(rq.result);
-      rq.onerror = ()=> rej(rq.error);
-    })
-  }
+<script>
+/* =========================
+   PASTE YOUR FIREBASE CONFIG HERE
+   Replace the object below with your project's config found in Project Settings -> SDK
+   Example:
+   const firebaseConfig = { apiKey: "...", authDomain: "...", projectId: "...", ... }
+   ========================= */
+const firebaseConfig = {
+  apiKey: "REPLACE_WITH_YOURS",
+  authDomain: "REPLACE_WITH_YOURS.firebaseapp.com",
+  projectId: "REPLACE_WITH_YOURS",
+  storageBucket: "REPLACE_WITH_YOURS.appspot.com",
+  messagingSenderId: "REPLACE_WITH_YOURS",
+  appId: "REPLACE_WITH_YOURS"
+};
+/* ========================= */
 
-  async function putBlob(key, blob){
-    const db = await openDB();
-    return new Promise((res,rej)=>{
-      const tx = db.transaction('blobs','readwrite');
-      tx.objectStore('blobs').put(blob, key);
-      tx.oncomplete = ()=> res(); tx.onerror = ()=> rej(tx.error);
-    })
-  }
-  async function getBlob(key){
-    const db = await openDB();
-    return new Promise((res,rej)=>{
-      const tx = db.transaction('blobs','readonly');
-      const rq = tx.objectStore('blobs').get(key);
-      rq.onsuccess = ()=> res(rq.result);
-      rq.onerror = ()=> rej(rq.error);
-    })
-  }
-  async function putPost(post){
-    const db = await openDB();
-    return new Promise((res,rej)=>{
-      const tx = db.transaction('posts','readwrite');
-      tx.objectStore('posts').put(post);
-      tx.oncomplete = ()=> res(); tx.onerror = ()=> rej(tx.error);
-    })
-  }
-  async function getAllPosts(){
-    const db = await openDB();
-    return new Promise((res,rej)=>{
-      const tx = db.transaction('posts','readonly');
-      const rq = tx.objectStore('posts').getAll();
-      rq.onsuccess = ()=> res(rq.result.sort((a,b)=>b.createdAt - a.createdAt));
-      rq.onerror = ()=> rej(rq.error);
-    })
-  }
-  async function deleteAll(){
-    const db = await openDB();
-    return new Promise((res,rej)=>{
-      const tx = db.transaction(['posts','blobs','messages'],'readwrite');
-      tx.objectStore('posts').clear(); tx.objectStore('blobs').clear(); tx.objectStore('messages').clear();
-      tx.oncomplete = ()=> res(); tx.onerror = ()=> rej(tx.error);
-    })
-  }
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  // ---------------------- Utilities ----------------------
-  function uid(prefix='id'){
-    return prefix + '_' + Math.random().toString(36).slice(2,10);
-  }
+// UI refs
+const roomsEl = document.getElementById('rooms');
+const messagesEl = document.getElementById('messages');
+const myIdEl = document.getElementById('myId');
+const roomTitleEl = document.getElementById('roomTitle');
+const roomAvatar = document.getElementById('roomAvatar');
+const roomSubtitle = document.getElementById('roomSubtitle');
+const statusText = document.getElementById('statusText');
+const newRoomBtn = document.getElementById('newRoomBtn');
+const sendBtn = document.getElementById('sendBtn');
+const msgInput = document.getElementById('msgInput');
+const attachUrl = document.getElementById('attachUrl');
+const createPostBtn = document.getElementById('createPost');
+const postUrlInput = document.getElementById('postUrl');
+const feedEl = document.getElementById('feed');
+const openFeedBtn = document.getElementById('openFeedBtn');
+const openChatBtn = document.getElementById('openChatBtn');
+const globalSearch = document.getElementById('globalSearch');
+const miniPlayer = document.getElementById('miniPlayer');
+const miniVideo = document.getElementById('miniVideo');
+const miniTitle = document.getElementById('miniTitle');
+const miniClose = document.getElementById('miniClose');
 
-  // create image thumbnail
-  function createImageThumbnail(file, maxW=600, maxH=400){
-    return new Promise((res,rej)=>{
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = e => img.src = e.target.result;
-      reader.onerror = rej;
-      img.onload = ()=>{
-        const scale = Math.min(maxW/img.width, maxH/img.height, 1);
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
-        const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,w,h);
-        canvas.toBlob(b=>res(b),'image/jpeg',0.8);
-      }
-      reader.readAsDataURL(file);
-    })
-  }
+// state
+let me = { uid: null, name: 'Guest' + Math.floor(Math.random() * 999), colorSeed: Math.random() };
+let currentRoom = 'general';
+let unsubscribeMessages = null;
+let unsubscribeFeed = null;
 
-  // create video thumbnail (capture first frame)
-  function createVideoThumbnail(file, maxW=600, maxH=400){
-    return new Promise((res,rej)=>{
-      const url = URL.createObjectURL(file);
-      const vid = document.createElement('video'); vid.src=url; vid.muted=true; vid.playsInline=true;
-      vid.addEventListener('loadeddata', ()=>{
-        vid.currentTime = Math.min(0.5, vid.duration/2);
-      });
-      vid.addEventListener('seeked', ()=>{
-        const canvas = document.createElement('canvas');
-        const scale = Math.min(maxW/vid.videoWidth, maxH/vid.videoHeight, 1);
-        canvas.width = Math.round(vid.videoWidth * scale); canvas.height = Math.round(vid.videoHeight * scale);
-        const ctx = canvas.getContext('2d'); ctx.drawImage(vid,0,0,canvas.width,canvas.height);
-        canvas.toBlob(b=>{ URL.revokeObjectURL(url); res(b); }, 'image/jpeg', 0.8);
-      });
-      vid.onerror = e=>{ URL.revokeObjectURL(url); rej(e) };
-    })
-  }
+// auth anon
+auth.signInAnonymously()
+  .then(() => {
+    me.uid = auth.currentUser.uid;
+    myIdEl.innerText = me.uid.slice(0,10);
+    statusText.innerText = 'Online • anonymous';
+    addDefaultRooms();
+    switchRoom(currentRoom);
+    subscribeFeed();
+  })
+  .catch(err => {
+    statusText.innerText = 'Auth error';
+    console.error(err);
+    alert('Auth error: ' + err.message + '\\nEnable Anonymous sign-in in Firebase console.');
+  });
 
-  // ---------------------- Feed rendering ----------------------
-  const feedWrap = document.getElementById('feed');
-  async function renderFeed(filter=''){
-    feedWrap.innerHTML = '';
-    const posts = await getAllPosts();
-    const ff = filter.trim().toLowerCase();
-    const shown = posts.filter(p=>{
-      if(!ff) return true;
-      const text = (p.caption||'') + ' ' + (p.tags||[]).join(' ');
-      return text.toLowerCase().includes(ff);
+// UI: rooms
+function addDefaultRooms(){
+  ['general','friends','music','random'].forEach(r => addRoomButton(r));
+}
+function addRoomButton(room){
+  const b = document.createElement('button');
+  b.className = 'room';
+  b.innerHTML = '<div class="dot">' + room[0].toUpperCase() + '</div><div style="flex:1;text-align:left;padding-left:8px">'+ room +'</div>';
+  b.addEventListener('click', ()=> switchRoom(room));
+  roomsEl.appendChild(b);
+}
+newRoomBtn.addEventListener('click', ()=>{
+  const r = prompt('Room name (short):','room_' + Math.random().toString(36).slice(2,6));
+  if(!r) return;
+  addRoomButton(r);
+  switchRoom(r);
+});
+
+function switchRoom(room){
+  currentRoom = room;
+  roomTitleEl.innerText = room;
+  roomAvatar.innerText = room[0].toUpperCase();
+  roomSubtitle.innerText = 'Realtime • ' + room;
+  Array.from(roomsEl.children).forEach(ch => ch.classList.toggle('active', ch.innerText.toLowerCase().includes(room.toLowerCase())));
+  if(typeof unsubscribeMessages === 'function') unsubscribeMessages();
+  subscribeMessages(room);
+}
+
+// Chat subscription
+function subscribeMessages(room){
+  const q = db.collection('messages').where('room','==',room).orderBy('createdAt','asc').limit(1000);
+  unsubscribeMessages = q.onSnapshot(snap => {
+    messagesEl.innerHTML = '';
+    snap.forEach(doc => renderMessage(doc.id, doc.data()));
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, err => {
+    console.error('messages listener', err);
+    statusText.innerText = 'Listener error';
+  });
+}
+
+function renderMessage(id, m){
+  const el = document.createElement('div');
+  el.className = 'msg ' + (m.senderId === me.uid ? 'me' : '');
+  const meta = document.createElement('div'); meta.className = 'meta';
+  const when = m.createdAt && m.createdAt.toDate ? m.createdAt.toDate().toLocaleString() : new Date().toLocaleString();
+  meta.innerText = (m.senderName || shorten(m.senderId)) + ' • ' + when;
+  el.appendChild(meta);
+  if(m.text) {
+    const t = document.createElement('div'); t.innerText = m.text; el.appendChild(t);
+  }
+  if(m.attachment){
+    if(isYouTubeUrl(m.attachment)){
+      const iframe = document.createElement('iframe');
+      iframe.width = '320'; iframe.height = '180'; iframe.frameBorder = 0;
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.src = youtubeEmbedUrl(m.attachment);
+      el.appendChild(iframe);
+    } else if(isImageUrl(m.attachment)){
+      const img = document.createElement('img'); img.src = m.attachment; img.style.maxWidth='320px'; img.style.borderRadius='8px'; img.style.marginTop='8px';
+      img.addEventListener('click', ()=> openMiniPlayer(m.attachment, (m.text||m.senderName||'Media')));
+      el.appendChild(img);
+    } else {
+      const a = document.createElement('a'); a.href = m.attachment; a.innerText = 'Open link'; a.target = '_blank'; el.appendChild(a);
+    }
+  }
+  messagesEl.appendChild(el);
+}
+
+// helpers
+function isImageUrl(url){ return url && url.match(/\\.(jpeg|jpg|gif|png|webp|bmp)(\\?.*)?$/i); }
+function isYouTubeUrl(url){ return url && (url.includes('youtube.com') || url.includes('youtu.be')); }
+function youtubeEmbedUrl(url){
+  try{
+    const u = new URL(url);
+    if(u.hostname.includes('youtu.be')) return 'https://www.youtube.com/embed/' + u.pathname.slice(1);
+    const id = u.searchParams.get('v'); return 'https://www.youtube.com/embed/' + id;
+  }catch(e){ return url; }
+}
+function shorten(id){ return id ? id.slice(0,8) : 'unknown'; }
+
+// send message
+sendBtn.addEventListener('click', sendMessage);
+msgInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') sendMessage(); });
+
+async function sendMessage(){
+  const text = msgInput.value.trim();
+  const attachment = attachUrl.value.trim() || null;
+  if(!text && !attachment) return;
+  sendBtn.disabled = true;
+  try {
+    await db.collection('messages').add({
+      room: currentRoom,
+      text: text || null,
+      attachment: attachment || null,
+      senderId: me.uid,
+      senderName: me.name,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    if(shown.length===0) feedWrap.innerHTML = '<div style="color:var(--muted);padding:20px">No posts yet — create one!</div>';
-    for(const p of shown){
-      const el = document.createElement('div'); el.className='post';
-      const mediaWrap = document.createElement('div'); mediaWrap.className='media';
-      if(p.type === 'image'){
-        const img = document.createElement('img');
-        const blob = await getBlob(p.blobKey);
-        img.src = URL.createObjectURL(blob);
-        mediaWrap.appendChild(img);
-      } else {
-        const vid = document.createElement('video'); vid.controls=false; vid.muted=true; vid.loop=true; vid.autoplay=true;
-        const blob = await getBlob(p.blobKey);
-        vid.src = URL.createObjectURL(blob);
-        mediaWrap.appendChild(vid);
-        // clicking opens in video player page
-        mediaWrap.style.cursor = 'pointer';
-        mediaWrap.addEventListener('click', ()=>{
-          const player = document.getElementById('player'); player.src = URL.createObjectURL(blob); navigate('video');
-        })
-      }
-      el.appendChild(mediaWrap);
-      const meta = document.createElement('div'); meta.className='meta';
-      meta.innerHTML = `<div style="font-weight:600">${escapeHtml(p.title||'Untitled')}</div><div style='color:var(--muted);font-size:13px'>${escapeHtml(p.caption||'')}</div>`;
-      el.appendChild(meta);
-      const actions = document.createElement('div'); actions.className='actions';
-      const likeBtn = document.createElement('button'); likeBtn.className='btn'; likeBtn.innerText='♥ Like';
-      likeBtn.addEventListener('click', async ()=>{ p.likes = (p.likes||0)+1; await putPost(p); renderFeed(document.getElementById('searchInput').value); });
-      const likeCount = document.createElement('div'); likeCount.className='like-count'; likeCount.innerText = (p.likes||0) + ' likes';
-      actions.appendChild(likeBtn); actions.appendChild(likeCount);
-      el.appendChild(actions);
-      feedWrap.appendChild(el);
+    msgInput.value = ''; attachUrl.value = '';
+  } catch(err){
+    console.error(err); alert('Send failed: ' + err.message);
+  } finally { sendBtn.disabled = false; }
+}
+
+// Feed subscription
+function subscribeFeed(){
+  const q = db.collection('posts').orderBy('createdAt','desc').limit(200);
+  unsubscribeFeed = q.onSnapshot(snap => {
+    feedEl.innerHTML = '';
+    snap.forEach(doc => renderPost(doc.id, doc.data()));
+  }, err => console.error('feed listener', err));
+}
+subscribeFeed();
+
+function renderPost(id,p){
+  const card = document.createElement('div'); card.className = 'post';
+  if(p.mediaUrl){
+    const m = document.createElement('div'); m.className = 'media';
+    if(isYouTubeUrl(p.mediaUrl)){
+      const iframe = document.createElement('iframe');
+      iframe.width='100%'; iframe.height='100%'; iframe.src = youtubeEmbedUrl(p.mediaUrl); iframe.frameBorder=0;
+      m.appendChild(iframe);
+    } else if(isImageUrl(p.mediaUrl)){
+      const img = document.createElement('img'); img.src = p.mediaUrl; img.style.width='100%'; img.style.height='100%';
+      img.addEventListener('click', ()=> openMiniPlayer(p.mediaUrl, p.title || 'Post'));
+      m.appendChild(img);
+    } else {
+      const a = document.createElement('a'); a.href = p.mediaUrl; a.innerText='Open media'; a.target='_blank'; m.appendChild(a);
     }
+    card.appendChild(m);
   }
+  const meta = document.createElement('div'); meta.className = 'meta';
+  const title = document.createElement('h4'); title.innerText = p.title || 'Untitled';
+  const caption = document.createElement('p'); caption.innerText = p.caption || '';
+  const by = document.createElement('div'); by.className = 'muted'; by.innerText = (p.authorName || shorten(p.authorId)) + ' • ' + (p.createdAt && p.createdAt.toDate ? p.createdAt.toDate().toLocaleString() : '');
+  meta.appendChild(title); meta.appendChild(caption); meta.appendChild(by);
+  card.appendChild(meta);
+  feedEl.appendChild(card);
+}
 
-  // simple escape
-  function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// create post
+createPostBtn.addEventListener('click', async ()=>{
+  const mediaUrl = postUrlInput.value.trim() || null;
+  if(!mediaUrl) return alert('Paste a public image URL or YouTube link to post');
+  createPostBtn.disabled = true;
+  try{
+    await db.collection('posts').add({
+      mediaUrl,
+      title: '',
+      caption: '',
+      authorId: me.uid,
+      authorName: me.name,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    postUrlInput.value = '';
+  }catch(err){ console.error(err); alert('Post failed: ' + err.message); }
+  createPostBtn.disabled = false;
+});
 
-  // search
-  document.getElementById('searchInput').addEventListener('input', e=> renderFeed(e.target.value));
+// UI toggles
+openFeedBtn.addEventListener('click', ()=> {
+  document.querySelectorAll('.panel').forEach(p=> p.style.display='none');
+  // show feed panel (right)
+  document.querySelectorAll('.content .panel')[1].style.display='flex';
+});
+openChatBtn.addEventListener('click', ()=> {
+  document.querySelectorAll('.panel').forEach(p=> p.style.display='flex');
+  document.querySelectorAll('.content .panel')[1].style.display='flex';
+});
 
-  // ---------------------- Upload flow ----------------------
-  let stagedFile = null; document.getElementById('fileInput').addEventListener('change', async e=>{
-    const f = e.target.files[0]; if(!f) return; stagedFile = f; await showPreview(f);
+// Search filter
+globalSearch.addEventListener('input', e=>{
+  const q = e.target.value.trim().toLowerCase();
+  Array.from(feedEl.children).forEach(card=>{
+    const txt = (card.innerText || '').toLowerCase();
+    card.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
   });
-  document.getElementById('newUpload').addEventListener('click', ()=>{ navigate('upload'); });
-  document.getElementById('previewBtn').addEventListener('click', ()=>{ if(stagedFile) showPreview(stagedFile); else alert('Choose a file first')});
+  Array.from(messagesEl.children).forEach(m=>{
+    const txt = (m.innerText || '').toLowerCase();
+    m.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
+  });
+});
 
-  async function showPreview(file){
-    const pa = document.getElementById('previewArea'); pa.innerHTML = '';
-    if(file.type.startsWith('image/')){
-      const img = document.createElement('img'); img.style.maxWidth='100%'; img.src = URL.createObjectURL(file); pa.appendChild(img);
-    } else if(file.type.startsWith('video/')){
-      const v = document.createElement('video'); v.style.maxWidth='100%'; v.controls=true; v.src = URL.createObjectURL(file); pa.appendChild(v);
-    }
+// mini player
+function openMiniPlayer(url, title){
+  miniPlayer.classList.remove('hidden');
+  miniTitle.innerText = title || 'Media';
+  if(isYouTubeUrl(url)){
+    // embed youtube inside video area via iframe fallback
+    miniVideo.pause();
+    miniVideo.classList.add('hidden');
+    // create iframe
+    const existing = miniPlayer.querySelector('iframe');
+    if(existing) existing.remove();
+    const iframe = document.createElement('iframe');
+    iframe.width = '100%'; iframe.height='100%'; iframe.src = youtubeEmbedUrl(url);
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    iframe.style.width='140px'; iframe.style.height='80px'; iframe.style.borderRadius='8px';
+    miniPlayer.insertBefore(iframe, miniPlayer.children[1]);
+  } else if(isImageUrl(url)){
+    // show image in video area (use <img>)
+    miniVideo.classList.add('hidden');
+    const existingImg = miniPlayer.querySelector('img');
+    if(existingImg) existingImg.remove();
+    const img = document.createElement('img');
+    img.src = url; img.style.width='140px'; img.style.height='80px'; img.style.objectFit='cover'; img.style.borderRadius='8px';
+    miniPlayer.insertBefore(img, miniPlayer.children[1]);
+  } else {
+    // try to load as video
+    miniPlayer.querySelectorAll('iframe,img').forEach(n=>n.remove());
+    miniVideo.classList.remove('hidden');
+    miniVideo.src = url;
+    miniVideo.play().catch(()=>{ /* autoplay blocked */ });
   }
+}
+miniClose.addEventListener('click', ()=> {
+  miniPlayer.classList.add('hidden');
+  miniVideo.pause(); miniVideo.src = '';
+  miniPlayer.querySelectorAll('iframe,img').forEach(n=>n.remove());
+});
 
-  document.getElementById('savePost').addEventListener('click', async ()=>{
-    const f = stagedFile; if(!f) return alert('Pick a file first');
-    const title = document.getElementById('titleInput').value;
-    const caption = document.getElementById('captionInput').value;
-    const tags = (document.getElementById('tagsInput').value||'').split(',').map(s=>s.trim()).filter(Boolean);
-    // simple size limit
-    if(f.size > 60 * 1024 * 1024) return alert('File too large (limit 60MB)');
-    const id = uid('post');
-    const blobKey = uid('blob');
-    // create thumbnail
-    let thumbBlob;
-    if(f.type.startsWith('image/')) thumbBlob = await createImageThumbnail(f,800,600);
-    else thumbBlob = await createVideoThumbnail(f,800,450);
+// utility
+function uid(p='id'){ return p + '_' + Math.random().toString(36).slice(2,9); }
+function now(){ return Date.now(); }
 
-    await putBlob(blobKey, f);
-    await putBlob(id + '_thumb', thumbBlob);
-    const post = { id, type: f.type.startsWith('image/') ? 'image' : 'video', blobKey, thumbnailKey: id + '_thumb', title, caption, tags, createdAt: Date.now(), likes:0 };
-    await putPost(post);
-    // clear staged
-    stagedFile = null; document.getElementById('fileInput').value=''; document.getElementById('captionInput').value=''; document.getElementById('titleInput').value=''; document.getElementById('tagsInput').value=''; document.getElementById('previewArea').innerHTML='';
-    navigate('feed'); renderFeed();
-  });
+// simple shorten display name
+(function askName(){
+  const n = localStorage.getItem('ict_display') || '';
+  if(n) { me.name = n; return; }
+  const s = prompt('Display name (optional):','Guest' + Math.floor(Math.random()*999));
+  if(s){ me.name = s; localStorage.setItem('ict_display', s); me.name = s; }
+})();
 
-  // ---------------------- Profile ----------------------
-  document.getElementById('saveProfile').addEventListener('click', async ()=>{
-    const name = document.getElementById('nameInput').value || 'You';
-    const db = await openDB();
-    const tx = db.transaction('meta','readwrite'); tx.objectStore('meta').put(name, 'username'); tx.oncomplete = ()=>{
-      document.getElementById('username').innerText = name; alert('Saved');
-    }
-  });
+function startSubscriptions(){
+  subscribeMessages(currentRoom);
+  subscribeFeed();
+}
 
-  async function renderProfile(){
-    const posts = await getAllPosts();
-    const myWrap = document.getElementById('myPosts'); myWrap.innerHTML='';
-    posts.forEach(async p=>{
-      const el = document.createElement('div'); el.className='post';
-      const mediaWrap = document.createElement('div'); mediaWrap.className='media';
-      const blob = await getBlob(p.blobKey);
-      if(p.type==='image'){ const img=document.createElement('img'); img.src=URL.createObjectURL(blob); mediaWrap.appendChild(img);} else { const v=document.createElement('video'); v.src=URL.createObjectURL(blob); v.controls=true; mediaWrap.appendChild(v); }
-      el.appendChild(mediaWrap); myWrap.appendChild(el);
-    })
-  }
+startSubscriptions();
 
-  // ---------------------- Chat (local only) ----------------------
-  let currentConversation = 'conv_local';
-  document.getElementById('sendMsg').addEventListener('click', async ()=> sendMessage());
-  document.getElementById('chatText').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
-
-  async function sendMessage(){
-    const txt = document.getElementById('chatText').value.trim(); if(!txt) return;
-    const db = await openDB();
-    const id = uid('msg');
-    const obj = { id, conversationId: currentConversation, sender: 'me', content: txt, timestamp: Date.now() };
-    return new Promise((res,rej)=>{
-      const tx = db.transaction('messages','readwrite'); tx.objectStore('messages').put(obj); tx.oncomplete = async ()=>{ document.getElementById('chatText').value=''; await renderMessages(); res(); };
-    })
-  }
-
-  async function renderMessages(){
-    const db = await openDB();
-    const tx = db.transaction('messages','readonly');
-    const rq = tx.objectStore('messages').getAll();
-    rq.onsuccess = ()=>{
-      const all = rq.result.filter(m=> m.conversationId === currentConversation).sort((a,b)=>a.timestamp-b.timestamp);
-      const wrap = document.getElementById('messages'); wrap.innerHTML='';
-      for(const m of all){ const d = document.createElement('div'); d.className = 'msg ' + (m.sender==='me' ? 'me':'' ); d.innerText = m.content; wrap.appendChild(d); }
-      wrap.scrollTop = wrap.scrollHeight;
-    }
-  }
-
-  // ---------------------- Export / Import ----------------------
-  document.getElementById('exportBtn').addEventListener('click', async ()=>{
-    const db = await openDB();
-    const [posts, msgs] = await Promise.all([getAllPosts(), new Promise((res,rej)=>{ const tx=db.transaction('messages','readonly'); const rq=tx.objectStore('messages').getAll(); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error)} )]);
-    // collect blobs
-    const blobs = {};
-    for(const p of posts){ const b = await getBlob(p.blobKey); const thumb = await getBlob(p.thumbnailKey); blobs[p.blobKey] = await blobToBase64(b); blobs[p.thumbnailKey] = await blobToBase64(thumb); }
-    const payload = { posts, msgs, blobs, meta: {} };
-    const dataStr = JSON.stringify(payload);
-    const blob = new Blob([dataStr], {type:'application/json'});
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download = 'ict_backup_' + Date.now() + '.json'; a.click(); URL.revokeObjectURL(url);
-  });
-
-  document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
-  document.getElementById('importFile').addEventListener('change', async e=>{
-    const f = e.target.files[0]; if(!f) return; const txt = await f.text(); const obj = JSON.parse(txt);
-    // write into db
-    const db = await openDB();
-    const tx = db.transaction(['posts','blobs','messages'],'readwrite');
-    for(const id in obj.blobs){ const b64 = obj.blobs[id]; const blob = base64ToBlob(b64); tx.objectStore('blobs').put(blob, id); }
-    for(const p of obj.posts){ tx.objectStore('posts').put(p); }
-    for(const m of obj.msgs){ tx.objectStore('messages').put(m); }
-    tx.oncomplete = ()=>{ alert('Imported'); renderFeed(); renderMessages(); renderProfile(); }
-  });
-
-  async function blobToBase64(blob){ return new Promise((res,rej)=>{ const r = new FileReader(); r.onload = ()=> res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); }) }
-  function base64ToBlob(b64){ const bin = atob(b64); const len = bin.length; const arr = new Uint8Array(len); for(let i=0;i<len;i++) arr[i]=bin.charCodeAt(i); return new Blob([arr]); }
-
-  // ---------------------- Clear all ----------------------
-  document.getElementById('clearAll').addEventListener('click', async ()=>{
-    if(!confirm('Clear all local posts & messages?')) return; await deleteAll(); renderFeed(); renderMessages(); renderProfile();
-  });
-
-  // ---------------------- Init ----------------------
-  (async function init(){
-    // ensure db exists
-    await openDB();
-    renderFeed(); renderMessages(); renderProfile();
-    // load username
-    const db = await openDB(); const tx = db.transaction('meta','readonly'); const rq = tx.objectStore('meta').get('username'); rq.onsuccess = ()=>{ if(rq.result) document.getElementById('username').innerText = rq.result; }
-  })();
-
-  // helpful: show posts in profile when switching
-  document.querySelectorAll('.nav button').forEach(b=> b.addEventListener('click', ()=>{ if(b.dataset.route==='profile') renderProfile(); if(b.dataset.route==='chat') renderMessages(); if(b.dataset.route==='feed') renderFeed(); }));
-
-  </script>
+</script>
 </body>
 </html>
