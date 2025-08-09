@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>InstaChatTube — Demo (HTML/CSS/JS only)</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#ff4d6d; --glass: rgba(255,255,255,0.03);
+      --ui-pad:12px; --radius:12px; --gap:12px; --maxw:1100px
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:linear-gradient(180deg,#071021 0%, #081427 100%); color:#e6eef6; display:flex; justify-content:center; padding:20px;
+    }
+    .app{width:100%; max-width:var(--maxw); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:18px; box-shadow:0 8px 40px rgba(2,6,23,0.7); overflow:hidden; display:grid; grid-template-columns:320px 1fr; min-height:650px}
+
+    /* Sidebar */
+    .sidebar{padding:18px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-right:1px solid rgba(255,255,255,0.03)}
+    .brand{display:flex; align-items:center; gap:12px; margin-bottom:18px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#ff7a9a,#6ecbff); display:flex; align-items:center; justify-content:center; font-weight:700}
+    .nav{display:flex;flex-direction:column; gap:8px}
+    .nav button{background:transparent; border:0; color:var(--muted); padding:10px 12px; text-align:left; border-radius:10px; cursor:pointer}
+    .nav button.active{background:var(--glass); color:white}
+    .sidebar .profile{margin-top:18px; display:flex; gap:12px; align-items:center}
+    .avatar{width:52px;height:52px;border-radius:12px;background:#123;background-size:cover}
+
+    /* Main content */
+    .main{padding:18px}
+    header.app-header{display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:18px}
+    .search{flex:1; margin-left:12px}
+    .search input{width:100%; padding:10px 12px; border-radius:999px; border:0; background:rgba(255,255,255,0.02); color:var(--muted)}
+
+    /* Feed */
+    .feed{display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:12px}
+    .post{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.02)}
+    .post .media{width:100%; height:180px; border-radius:8px; background:#021; display:flex; align-items:center; justify-content:center; overflow:hidden}
+    .post img, .post video{width:100%; height:100%; object-fit:cover}
+    .post .meta{margin-top:8px}
+    .actions{display:flex; gap:8px; margin-top:6px; align-items:center}
+    .btn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:8px;border-radius:8px}
+    .like-count{font-size:13px;color:var(--muted)}
+
+    /* Upload */
+    .upload-panel{max-width:760px}
+    .uform{display:grid; gap:8px}
+    textarea{min-height:80px; padding:8px; border-radius:8px; background:rgba(255,255,255,0.02); border:0; color:var(--muted)}
+
+    /* Chat */
+    .chat{display:flex; flex-direction:column; height:580px}
+    .contacts{padding:8px; border-bottom:1px solid rgba(255,255,255,0.02)}
+    .contacts button{display:flex; gap:10px; align-items:center; width:100%; padding:8px; background:transparent; border:0; color:var(--muted); cursor:pointer}
+    .messages{flex:1; padding:12px; overflow:auto}
+    .msg{max-width:70%; margin-bottom:8px; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.02)}
+    .msg.me{margin-left:auto; background:linear-gradient(90deg,#0b806f,#0ea5a0)}
+    .chat-input{display:flex; gap:8px; padding:8px; border-top:1px solid rgba(255,255,255,0.02)}
+    .chat-input input{flex:1; padding:8px; border-radius:8px; border:0; background:rgba(255,255,255,0.02); color:var(--muted)}
+
+    /* Misc */
+    .hidden{display:none}
+    footer.note{padding:12px; color:var(--muted); font-size:13px; text-align:center}
+
+    /* Responsive */
+    @media (max-width:920px){
+      .app{grid-template-columns:1fr;}
+      .sidebar{display:flex; gap:8px; overflow:auto}
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">ICT</div>
+        <div>
+          <div style="font-weight:700">InstaChatTube</div>
+          <div style="font-size:12px;color:var(--muted)">Local demo • HTML/CSS/JS</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <button data-route="feed" class="active">Feed</button>
+        <button data-route="upload">Upload</button>
+        <button data-route="chat">Chat</button>
+        <button data-route="profile">Profile</button>
+        <button data-route="video">Video Player</button>
+      </nav>
+
+      <div style="margin-top:18px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Quick actions</div>
+        <button id="exportBtn" class="btn">Export data</button>
+        <button id="importBtn" class="btn">Import data</button>
+        <input id="importFile" type="file" accept="application/json" class="hidden">
+      </div>
+
+      <div class="profile">
+        <div class="avatar" id="sidebarAvatar" style="background-image: url('');"></div>
+        <div>
+          <div id="username">You</div>
+          <div style="font-size:12px;color:var(--muted)">Local account</div>
+        </div>
+      </div>
+
+      <footer class="note">This is an offline demo — posts are stored in your browser (IndexedDB). To share data, use Export/Import.</footer>
+    </aside>
+
+    <main class="main">
+      <header class="app-header">
+        <div style="display:flex;align-items:center;">
+          <h2 style="margin:0">InstaChatTube</h2>
+          <div class="search" style="margin-left:18px"><input id="searchInput" placeholder="Search captions or tags..."></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="newUpload" class="btn">New upload</button>
+          <button id="clearAll" class="btn">Clear all</button>
+        </div>
+      </header>
+
+      <!-- Feed -->
+      <section id="page-feed">
+        <div class="feed" id="feed"></div>
+      </section>
+
+      <!-- Upload -->
+      <section id="page-upload" class="hidden">
+        <div class="upload-panel">
+          <h3>Upload image or short video</h3>
+          <div class="uform">
+            <input id="fileInput" type="file" accept="image/*,video/*">
+            <input id="titleInput" placeholder="Title (optional)">
+            <textarea id="captionInput" placeholder="Write a caption..."></textarea>
+            <input id="tagsInput" placeholder="Tags (comma separated)">
+            <div style="display:flex;gap:8px">
+              <button id="savePost" class="btn">Save post</button>
+              <button id="previewBtn" class="btn">Preview</button>
+            </div>
+            <div id="previewArea"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat -->
+      <section id="page-chat" class="hidden">
+        <div class="chat">
+          <div class="contacts">
+            <button id="newConv">+ New Conversation</button>
+          </div>
+          <div class="messages" id="messages"></div>
+          <div class="chat-input">
+            <input id="chatText" placeholder="Type a message...">
+            <button id="sendMsg" class="btn">Send</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Profile -->
+      <section id="page-profile" class="hidden">
+        <h3>Profile</h3>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="avatar" id="profileAvatar" style="width:96px;height:96px"></div>
+          <div>
+            <input id="nameInput" placeholder="Your name">
+            <div style="margin-top:8px">
+              <button id="saveProfile" class="btn">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <h4 style="margin-top:18px">Your posts</h4>
+        <div id="myPosts" class="feed"></div>
+      </section>
+
+      <!-- Video Player -->
+      <section id="page-video" class="hidden">
+        <h3>Video Player</h3>
+        <div id="playerWrap">
+          <video id="player" controls style="width:100%;max-height:480px;background:black"></video>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+  // ---------------------- Basic SPA router ----------------------
+  const routes = ['feed','upload','chat','profile','video'];
+  document.querySelectorAll('.nav button').forEach(btn=> btn.addEventListener('click',e=>{
+    const r = btn.dataset.route; navigate(r);
+  }));
+  function navigate(route){
+    routes.forEach(r=> document.getElementById('page-'+r).classList.add('hidden'));
+    document.getElementById('page-'+route).classList.remove('hidden');
+    document.querySelectorAll('.nav button').forEach(b=> b.classList.toggle('active', b.dataset.route===route));
+  }
+
+  // default
+  navigate('feed');
+
+  // ---------------------- IndexedDB helpers ----------------------
+  function openDB(name='ictDB', version=1){
+    return new Promise((res,rej)=>{
+      const rq = indexedDB.open(name,version);
+      rq.onupgradeneeded = e=>{
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+        if(!db.objectStoreNames.contains('posts')) db.createObjectStore('posts',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('messages')) db.createObjectStore('messages',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+      }
+      rq.onsuccess = ()=> res(rq.result);
+      rq.onerror = ()=> rej(rq.error);
+    })
+  }
+
+  async function putBlob(key, blob){
+    const db = await openDB();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction('blobs','readwrite');
+      tx.objectStore('blobs').put(blob, key);
+      tx.oncomplete = ()=> res(); tx.onerror = ()=> rej(tx.error);
+    })
+  }
+  async function getBlob(key){
+    const db = await openDB();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction('blobs','readonly');
+      const rq = tx.objectStore('blobs').get(key);
+      rq.onsuccess = ()=> res(rq.result);
+      rq.onerror = ()=> rej(rq.error);
+    })
+  }
+  async function putPost(post){
+    const db = await openDB();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction('posts','readwrite');
+      tx.objectStore('posts').put(post);
+      tx.oncomplete = ()=> res(); tx.onerror = ()=> rej(tx.error);
+    })
+  }
+  async function getAllPosts(){
+    const db = await openDB();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction('posts','readonly');
+      const rq = tx.objectStore('posts').getAll();
+      rq.onsuccess = ()=> res(rq.result.sort((a,b)=>b.createdAt - a.createdAt));
+      rq.onerror = ()=> rej(rq.error);
+    })
+  }
+  async function deleteAll(){
+    const db = await openDB();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction(['posts','blobs','messages'],'readwrite');
+      tx.objectStore('posts').clear(); tx.objectStore('blobs').clear(); tx.objectStore('messages').clear();
+      tx.oncomplete = ()=> res(); tx.onerror = ()=> rej(tx.error);
+    })
+  }
+
+  // ---------------------- Utilities ----------------------
+  function uid(prefix='id'){
+    return prefix + '_' + Math.random().toString(36).slice(2,10);
+  }
+
+  // create image thumbnail
+  function createImageThumbnail(file, maxW=600, maxH=400){
+    return new Promise((res,rej)=>{
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = e => img.src = e.target.result;
+      reader.onerror = rej;
+      img.onload = ()=>{
+        const scale = Math.min(maxW/img.width, maxH/img.height, 1);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
+        const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+        canvas.toBlob(b=>res(b),'image/jpeg',0.8);
+      }
+      reader.readAsDataURL(file);
+    })
+  }
+
+  // create video thumbnail (capture first frame)
+  function createVideoThumbnail(file, maxW=600, maxH=400){
+    return new Promise((res,rej)=>{
+      const url = URL.createObjectURL(file);
+      const vid = document.createElement('video'); vid.src=url; vid.muted=true; vid.playsInline=true;
+      vid.addEventListener('loadeddata', ()=>{
+        vid.currentTime = Math.min(0.5, vid.duration/2);
+      });
+      vid.addEventListener('seeked', ()=>{
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(maxW/vid.videoWidth, maxH/vid.videoHeight, 1);
+        canvas.width = Math.round(vid.videoWidth * scale); canvas.height = Math.round(vid.videoHeight * scale);
+        const ctx = canvas.getContext('2d'); ctx.drawImage(vid,0,0,canvas.width,canvas.height);
+        canvas.toBlob(b=>{ URL.revokeObjectURL(url); res(b); }, 'image/jpeg', 0.8);
+      });
+      vid.onerror = e=>{ URL.revokeObjectURL(url); rej(e) };
+    })
+  }
+
+  // ---------------------- Feed rendering ----------------------
+  const feedWrap = document.getElementById('feed');
+  async function renderFeed(filter=''){
+    feedWrap.innerHTML = '';
+    const posts = await getAllPosts();
+    const ff = filter.trim().toLowerCase();
+    const shown = posts.filter(p=>{
+      if(!ff) return true;
+      const text = (p.caption||'') + ' ' + (p.tags||[]).join(' ');
+      return text.toLowerCase().includes(ff);
+    });
+    if(shown.length===0) feedWrap.innerHTML = '<div style="color:var(--muted);padding:20px">No posts yet — create one!</div>';
+    for(const p of shown){
+      const el = document.createElement('div'); el.className='post';
+      const mediaWrap = document.createElement('div'); mediaWrap.className='media';
+      if(p.type === 'image'){
+        const img = document.createElement('img');
+        const blob = await getBlob(p.blobKey);
+        img.src = URL.createObjectURL(blob);
+        mediaWrap.appendChild(img);
+      } else {
+        const vid = document.createElement('video'); vid.controls=false; vid.muted=true; vid.loop=true; vid.autoplay=true;
+        const blob = await getBlob(p.blobKey);
+        vid.src = URL.createObjectURL(blob);
+        mediaWrap.appendChild(vid);
+        // clicking opens in video player page
+        mediaWrap.style.cursor = 'pointer';
+        mediaWrap.addEventListener('click', ()=>{
+          const player = document.getElementById('player'); player.src = URL.createObjectURL(blob); navigate('video');
+        })
+      }
+      el.appendChild(mediaWrap);
+      const meta = document.createElement('div'); meta.className='meta';
+      meta.innerHTML = `<div style="font-weight:600">${escapeHtml(p.title||'Untitled')}</div><div style='color:var(--muted);font-size:13px'>${escapeHtml(p.caption||'')}</div>`;
+      el.appendChild(meta);
+      const actions = document.createElement('div'); actions.className='actions';
+      const likeBtn = document.createElement('button'); likeBtn.className='btn'; likeBtn.innerText='♥ Like';
+      likeBtn.addEventListener('click', async ()=>{ p.likes = (p.likes||0)+1; await putPost(p); renderFeed(document.getElementById('searchInput').value); });
+      const likeCount = document.createElement('div'); likeCount.className='like-count'; likeCount.innerText = (p.likes||0) + ' likes';
+      actions.appendChild(likeBtn); actions.appendChild(likeCount);
+      el.appendChild(actions);
+      feedWrap.appendChild(el);
+    }
+  }
+
+  // simple escape
+  function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // search
+  document.getElementById('searchInput').addEventListener('input', e=> renderFeed(e.target.value));
+
+  // ---------------------- Upload flow ----------------------
+  let stagedFile = null; document.getElementById('fileInput').addEventListener('change', async e=>{
+    const f = e.target.files[0]; if(!f) return; stagedFile = f; await showPreview(f);
+  });
+  document.getElementById('newUpload').addEventListener('click', ()=>{ navigate('upload'); });
+  document.getElementById('previewBtn').addEventListener('click', ()=>{ if(stagedFile) showPreview(stagedFile); else alert('Choose a file first')});
+
+  async function showPreview(file){
+    const pa = document.getElementById('previewArea'); pa.innerHTML = '';
+    if(file.type.startsWith('image/')){
+      const img = document.createElement('img'); img.style.maxWidth='100%'; img.src = URL.createObjectURL(file); pa.appendChild(img);
+    } else if(file.type.startsWith('video/')){
+      const v = document.createElement('video'); v.style.maxWidth='100%'; v.controls=true; v.src = URL.createObjectURL(file); pa.appendChild(v);
+    }
+  }
+
+  document.getElementById('savePost').addEventListener('click', async ()=>{
+    const f = stagedFile; if(!f) return alert('Pick a file first');
+    const title = document.getElementById('titleInput').value;
+    const caption = document.getElementById('captionInput').value;
+    const tags = (document.getElementById('tagsInput').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+    // simple size limit
+    if(f.size > 60 * 1024 * 1024) return alert('File too large (limit 60MB)');
+    const id = uid('post');
+    const blobKey = uid('blob');
+    // create thumbnail
+    let thumbBlob;
+    if(f.type.startsWith('image/')) thumbBlob = await createImageThumbnail(f,800,600);
+    else thumbBlob = await createVideoThumbnail(f,800,450);
+
+    await putBlob(blobKey, f);
+    await putBlob(id + '_thumb', thumbBlob);
+    const post = { id, type: f.type.startsWith('image/') ? 'image' : 'video', blobKey, thumbnailKey: id + '_thumb', title, caption, tags, createdAt: Date.now(), likes:0 };
+    await putPost(post);
+    // clear staged
+    stagedFile = null; document.getElementById('fileInput').value=''; document.getElementById('captionInput').value=''; document.getElementById('titleInput').value=''; document.getElementById('tagsInput').value=''; document.getElementById('previewArea').innerHTML='';
+    navigate('feed'); renderFeed();
+  });
+
+  // ---------------------- Profile ----------------------
+  document.getElementById('saveProfile').addEventListener('click', async ()=>{
+    const name = document.getElementById('nameInput').value || 'You';
+    const db = await openDB();
+    const tx = db.transaction('meta','readwrite'); tx.objectStore('meta').put(name, 'username'); tx.oncomplete = ()=>{
+      document.getElementById('username').innerText = name; alert('Saved');
+    }
+  });
+
+  async function renderProfile(){
+    const posts = await getAllPosts();
+    const myWrap = document.getElementById('myPosts'); myWrap.innerHTML='';
+    posts.forEach(async p=>{
+      const el = document.createElement('div'); el.className='post';
+      const mediaWrap = document.createElement('div'); mediaWrap.className='media';
+      const blob = await getBlob(p.blobKey);
+      if(p.type==='image'){ const img=document.createElement('img'); img.src=URL.createObjectURL(blob); mediaWrap.appendChild(img);} else { const v=document.createElement('video'); v.src=URL.createObjectURL(blob); v.controls=true; mediaWrap.appendChild(v); }
+      el.appendChild(mediaWrap); myWrap.appendChild(el);
+    })
+  }
+
+  // ---------------------- Chat (local only) ----------------------
+  let currentConversation = 'conv_local';
+  document.getElementById('sendMsg').addEventListener('click', async ()=> sendMessage());
+  document.getElementById('chatText').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
+
+  async function sendMessage(){
+    const txt = document.getElementById('chatText').value.trim(); if(!txt) return;
+    const db = await openDB();
+    const id = uid('msg');
+    const obj = { id, conversationId: currentConversation, sender: 'me', content: txt, timestamp: Date.now() };
+    return new Promise((res,rej)=>{
+      const tx = db.transaction('messages','readwrite'); tx.objectStore('messages').put(obj); tx.oncomplete = async ()=>{ document.getElementById('chatText').value=''; await renderMessages(); res(); };
+    })
+  }
+
+  async function renderMessages(){
+    const db = await openDB();
+    const tx = db.transaction('messages','readonly');
+    const rq = tx.objectStore('messages').getAll();
+    rq.onsuccess = ()=>{
+      const all = rq.result.filter(m=> m.conversationId === currentConversation).sort((a,b)=>a.timestamp-b.timestamp);
+      const wrap = document.getElementById('messages'); wrap.innerHTML='';
+      for(const m of all){ const d = document.createElement('div'); d.className = 'msg ' + (m.sender==='me' ? 'me':'' ); d.innerText = m.content; wrap.appendChild(d); }
+      wrap.scrollTop = wrap.scrollHeight;
+    }
+  }
+
+  // ---------------------- Export / Import ----------------------
+  document.getElementById('exportBtn').addEventListener('click', async ()=>{
+    const db = await openDB();
+    const [posts, msgs] = await Promise.all([getAllPosts(), new Promise((res,rej)=>{ const tx=db.transaction('messages','readonly'); const rq=tx.objectStore('messages').getAll(); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error)} )]);
+    // collect blobs
+    const blobs = {};
+    for(const p of posts){ const b = await getBlob(p.blobKey); const thumb = await getBlob(p.thumbnailKey); blobs[p.blobKey] = await blobToBase64(b); blobs[p.thumbnailKey] = await blobToBase64(thumb); }
+    const payload = { posts, msgs, blobs, meta: {} };
+    const dataStr = JSON.stringify(payload);
+    const blob = new Blob([dataStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download = 'ict_backup_' + Date.now() + '.json'; a.click(); URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', async e=>{
+    const f = e.target.files[0]; if(!f) return; const txt = await f.text(); const obj = JSON.parse(txt);
+    // write into db
+    const db = await openDB();
+    const tx = db.transaction(['posts','blobs','messages'],'readwrite');
+    for(const id in obj.blobs){ const b64 = obj.blobs[id]; const blob = base64ToBlob(b64); tx.objectStore('blobs').put(blob, id); }
+    for(const p of obj.posts){ tx.objectStore('posts').put(p); }
+    for(const m of obj.msgs){ tx.objectStore('messages').put(m); }
+    tx.oncomplete = ()=>{ alert('Imported'); renderFeed(); renderMessages(); renderProfile(); }
+  });
+
+  async function blobToBase64(blob){ return new Promise((res,rej)=>{ const r = new FileReader(); r.onload = ()=> res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); }) }
+  function base64ToBlob(b64){ const bin = atob(b64); const len = bin.length; const arr = new Uint8Array(len); for(let i=0;i<len;i++) arr[i]=bin.charCodeAt(i); return new Blob([arr]); }
+
+  // ---------------------- Clear all ----------------------
+  document.getElementById('clearAll').addEventListener('click', async ()=>{
+    if(!confirm('Clear all local posts & messages?')) return; await deleteAll(); renderFeed(); renderMessages(); renderProfile();
+  });
+
+  // ---------------------- Init ----------------------
+  (async function init(){
+    // ensure db exists
+    await openDB();
+    renderFeed(); renderMessages(); renderProfile();
+    // load username
+    const db = await openDB(); const tx = db.transaction('meta','readonly'); const rq = tx.objectStore('meta').get('username'); rq.onsuccess = ()=>{ if(rq.result) document.getElementById('username').innerText = rq.result; }
+  })();
+
+  // helpful: show posts in profile when switching
+  document.querySelectorAll('.nav button').forEach(b=> b.addEventListener('click', ()=>{ if(b.dataset.route==='profile') renderProfile(); if(b.dataset.route==='chat') renderMessages(); if(b.dataset.route==='feed') renderFeed(); }));
+
+  </script>
+</body>
+</html>
