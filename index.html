@@ -3,502 +3,260 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>InstaChatTube — Polished (Firestore)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<title>SocialChat — Firestore Realtime Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
 <style>
-  :root{
-    --bg:#071026; --card:#0c1724; --muted:#9fb0c4; --accent:#3dd6c5; --accent-2:#7c5cff;
-    --glass:rgba(255,255,255,0.03); --radius:14px; --gap:14px;
+  :root {
+    --bg: #071227;
+    --card: #0b1724;
+    --muted: #9fb0c4;
+    --accent: #06b6d4;
+    --accent2: #7c5cff;
+    --glass: rgba(255, 255, 255, 0.03);
   }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background: linear-gradient(180deg,#051121 0%, #07172a 100%);
-    color:#eaf6ff; display:flex; align-items:center; justify-content:center; padding:20px;
+  * {
+    box-sizing: border-box;
   }
-
-  /* App shell */
-  .app{
-    width:100%; max-width:1200px; height:86vh; border-radius:18px; overflow:hidden;
-    display:grid; grid-template-columns:320px 1fr; box-shadow:0 20px 60px rgba(2,6,23,0.7);
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border: 1px solid rgba(255,255,255,0.03);
+  body {
+    margin: 0;
+    font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+    background: linear-gradient(180deg, #04101a, #071827);
+    color: #eaf6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    height: 100vh;
   }
-
-  /* Sidebar */
-  .sidebar{
-    padding:18px; border-right:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; gap:12px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  .app {
+    width: 100%;
+    max-width: 900px;
+    height: 80vh;
+    border-radius: 14px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0));
+    border: 1px solid rgba(255, 255, 255, 0.03);
   }
-  .brand{display:flex; gap:12px; align-items:center}
-  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--accent-2),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:800;color:#06202a}
-  .brand h1{font-size:16px;margin:0}
-  .brand p{margin:0;color:var(--muted);font-size:12px}
-
-  .controls{display:flex;flex-direction:column;gap:8px}
-  .btn{padding:10px;border-radius:10px;border:0;background:transparent;color:var(--muted);text-align:left;cursor:pointer}
-  .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#02171a; font-weight:600}
-  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.03);}
-
-  .rooms{display:flex;flex-direction:column; gap:8px; margin-top:6px; overflow:auto; padding-right:6px}
-  .room{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;color:var(--muted);background:transparent;border:0}
-  .room.active{background:var(--glass); color:#fff}
-  .room .dot{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2f8f9c,#4fb7df);display:flex;align-items:center;justify-content:center;font-weight:700;color:#02171a}
-
-  .sidebar .small{font-size:12px;color:var(--muted);margin-top:auto}
-
-  /* Content area */
-  .content{display:flex;flex-direction:column;padding:18px;gap:12px}
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .search{flex:1;display:flex;gap:12px;align-items:center}
-  .search input{flex:1;padding:12px;border-radius:999px;border:0;background:rgba(255,255,255,0.02);color:var(--muted)}
-  .actions{display:flex;gap:8px;align-items:center}
-
-  /* Main layout: left chat + right feed/mini player */
-  .main-grid{display:grid;grid-template-columns:45% 55%; gap:12px; align-items:start; flex:1; min-height:0}
-  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01)); border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.02); min-height:0}
-
-  /* Chat panel */
-  .chat-header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
-  .avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#7c5cff,#3dd6c5);display:flex;align-items:center;justify-content:center;font-weight:700;color:#02171a}
-  .status{font-size:13px;color:var(--muted)}
-  .messages{height:58vh;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg, rgba(0,0,0,0.01), rgba(0,0,0,0.02)); border-radius:10px}
-  .msg{max-width:74%;padding:10px;border-radius:12px;background:rgba(255,255,255,0.02);color:var(--muted); font-size:14px; box-shadow:0 2px 8px rgba(3,6,14,0.4)}
-  .msg.me{margin-left:auto;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#02171a}
-  .msg .meta{font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px}
-
-  .chat-footer{display:flex;gap:8px;align-items:center;margin-top:8px}
-  .chat-footer input[type="text"]{flex:1;padding:12px;border-radius:999px;border:0;background:rgba(255,255,255,0.02);color:var(--muted)}
-  .chat-footer input[type="url"]{width:320px;padding:10px;border-radius:10px;border:0;background:rgba(255,255,255,0.02);color:var(--muted)}
-
-  /* Feed panel */
-  .feed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-  .post{border-radius:12px;overflow:hidden;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.02); display:flex;flex-direction:column}
-  .post .media{height:160px;display:flex;align-items:center;justify-content:center;background:#050b10}
-  .post .meta{padding:10px}
-  .post h4{margin:0 0 6px 0}
-  .post p{margin:0;color:var(--muted);font-size:13px}
-
-  /* Floating player */
-  .mini-player{position:fixed;right:30px;bottom:30px;width:300px;background:linear-gradient(180deg,#081223,#07121b);border-radius:12px;padding:8px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 12px 40px rgba(2,6,23,0.7);display:flex;gap:8px;align-items:center}
-  .mini-player video{width:140px;height:80px;border-radius:8px;object-fit:cover}
-  .mini-player .controls{display:flex;flex-direction:column;gap:6px}
-
-  /* small helpers */
-  .muted{color:var(--muted);font-size:13px}
-  .hidden{display:none}
-
-  /* responsive */
-  @media (max-width:980px){
-    .app{grid-template-columns:1fr; height:95vh}
-    .main-grid{grid-template-columns:1fr}
-    .mini-player{right:14px;bottom:14px;width:260px}
+  .card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.01));
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.02);
   }
-
-  /* small animations */
-  .btn, .room { transition: all 160ms cubic-bezier(.2,.9,.2,1) }
-  .post:hover{transform:translateY(-4px); transition: transform 180ms ease}
+  input,
+  button {
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    padding: 10px;
+  }
+  input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    color: #eee;
+  }
+  button {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #02171a;
+    cursor: pointer;
+    min-width: 80px;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    color: #eee;
+    font-size: 0.95rem;
+  }
+  .msg {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+  .msg.me {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #02171a;
+    margin-left: auto;
+  }
+  .meta {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-bottom: 4px;
+  }
+  .composer {
+    display: flex;
+    gap: 10px;
+  }
 </style>
 </head>
 <body>
   <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">ICT</div>
-        <div>
-          <h1>InstaChatTube</h1>
-          <p>Realtime demo • Firestore</p>
-        </div>
+    <div class="card">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <input id="displayName" placeholder="Your display name (optional)" />
+        <button id="saveNameBtn">Save Name</button>
       </div>
 
-      <div class="controls">
-        <button class="btn primary" id="newRoomBtn">+ Create Room</button>
-        <button class="btn ghost" id="openFeedBtn">Open Feed</button>
-        <button class="btn" id="openChatBtn">Open Chat</button>
-      </div>
+      <div id="messages">Loading messages...</div>
 
-      <div style="margin-top:6px">
-        <div class="muted" style="font-size:13px;margin-bottom:8px">Rooms</div>
-        <div class="rooms" id="rooms"></div>
-      </div>
-
-      <div class="small">Your id: <span id="myId" style="font-weight:700"></span></div>
-      <div class="small" style="margin-top:auto">Tip: paste public image or YouTube URLs when creating posts.</div>
-    </aside>
-
-    <section class="content">
-      <div class="topbar">
-        <div class="search">
-          <input id="globalSearch" placeholder="Search feed or chat..." />
-        </div>
-        <div class="actions">
-          <div class="muted" id="statusText">Connecting...</div>
-        </div>
-      </div>
-
-      <div class="main-grid">
-        <!-- CHAT PANEL -->
-        <div class="panel" style="display:flex;flex-direction:column;min-height:0">
-          <div class="chat-header">
-            <div class="avatar" id="roomAvatar">G</div>
-            <div>
-              <div id="roomTitle" style="font-weight:700">general</div>
-              <div class="status" id="roomSubtitle">Realtime chat • anonymous</div>
-            </div>
-          </div>
-
-          <div class="messages panel-body" id="messages" style="flex:1;min-height:0"></div>
-
-          <div class="chat-footer">
-            <input id="msgInput" type="text" placeholder="Type a message..." />
-            <input id="attachUrl" type="url" placeholder="Attachment URL (optional: image / youtube)" />
-            <button id="sendBtn" class="btn primary">Send</button>
-          </div>
-        </div>
-
-        <!-- FEED PANEL -->
-        <div class="panel">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div>
-              <h3 style="margin:0">Global Feed</h3>
-              <div class="muted" style="margin-top:4px;font-size:13px">Shared URLs — images or YouTube embeds</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input id="postUrl" placeholder="Media URL or YouTube/watch URL" style="padding:8px;border-radius:8px;border:0;background:rgba(255,255,255,0.02);color:var(--muted);width:260px">
-              <button id="createPost" class="btn primary">Post</button>
-            </div>
-          </div>
-
-          <div id="feed" class="feed-grid"></div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- floating mini player -->
-  <div class="mini-player hidden" id="miniPlayer">
-    <video id="miniVideo" playsinline muted></video>
-    <div class="controls">
-      <div id="miniTitle" style="font-weight:700;font-size:13px">Now playing</div>
-      <div style="display:flex;gap:8px">
-        <button id="miniClose" class="btn ghost">Close</button>
+      <div class="composer">
+        <input id="msgText" type="text" placeholder="Type your message..." autocomplete="off" />
+        <button id="sendBtn" disabled>Send</button>
       </div>
     </div>
   </div>
 
-  <!-- Firebase compat libs (single-file friendly) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-<script>
-/* =========================
-   PASTE YOUR FIREBASE CONFIG HERE
-   Replace the object below with your project's config found in Project Settings -> SDK
-   Example:
-   const firebaseConfig = { apiKey: "...", authDomain: "...", projectId: "...", ... }
-   ========================= */
-const firebaseConfig = {
-  apiKey: "REPLACE_WITH_YOURS",
-  authDomain: "REPLACE_WITH_YOURS.firebaseapp.com",
-  projectId: "REPLACE_WITH_YOURS",
-  storageBucket: "REPLACE_WITH_YOURS.appspot.com",
-  messagingSenderId: "REPLACE_WITH_YOURS",
-  appId: "REPLACE_WITH_YOURS"
-};
-/* ========================= */
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAuCm6fvNfuNJBqgrcsVYBCFD-A0D4H6kA",
+      authDomain: "clone-d87d6.firebaseapp.com",
+      projectId: "clone-d87d6",
+      storageBucket: "clone-d87d6.appspot.com",
+      messagingSenderId: "780523999031",
+      appId: "1:780523999031:web:6d3357a76f9a90b0eed4b2",
+      measurementId: "G-GCQLDBD4JM"
+    };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-// UI refs
-const roomsEl = document.getElementById('rooms');
-const messagesEl = document.getElementById('messages');
-const myIdEl = document.getElementById('myId');
-const roomTitleEl = document.getElementById('roomTitle');
-const roomAvatar = document.getElementById('roomAvatar');
-const roomSubtitle = document.getElementById('roomSubtitle');
-const statusText = document.getElementById('statusText');
-const newRoomBtn = document.getElementById('newRoomBtn');
-const sendBtn = document.getElementById('sendBtn');
-const msgInput = document.getElementById('msgInput');
-const attachUrl = document.getElementById('attachUrl');
-const createPostBtn = document.getElementById('createPost');
-const postUrlInput = document.getElementById('postUrl');
-const feedEl = document.getElementById('feed');
-const openFeedBtn = document.getElementById('openFeedBtn');
-const openChatBtn = document.getElementById('openChatBtn');
-const globalSearch = document.getElementById('globalSearch');
-const miniPlayer = document.getElementById('miniPlayer');
-const miniVideo = document.getElementById('miniVideo');
-const miniTitle = document.getElementById('miniTitle');
-const miniClose = document.getElementById('miniClose');
+    // UI Elements
+    const messagesEl = document.getElementById('messages');
+    const msgText = document.getElementById('msgText');
+    const sendBtn = document.getElementById('sendBtn');
+    const displayNameInput = document.getElementById('displayName');
+    const saveNameBtn = document.getElementById('saveNameBtn');
 
-// state
-let me = { uid: null, name: 'Guest' + Math.floor(Math.random() * 999), colorSeed: Math.random() };
-let currentRoom = 'general';
-let unsubscribeMessages = null;
-let unsubscribeFeed = null;
+    // User state
+    let me = { uid: null, name: 'Guest' + Math.floor(Math.random() * 9999) };
+    const room = 'general'; // single chat room
 
-// auth anon
-auth.signInAnonymously()
-  .then(() => {
-    me.uid = auth.currentUser.uid;
-    myIdEl.innerText = me.uid.slice(0,10);
-    statusText.innerText = 'Online • anonymous';
-    addDefaultRooms();
-    switchRoom(currentRoom);
-    subscribeFeed();
-  })
-  .catch(err => {
-    statusText.innerText = 'Auth error';
-    console.error(err);
-    alert('Auth error: ' + err.message + '\\nEnable Anonymous sign-in in Firebase console.');
-  });
+    // Initialize display name input from localStorage or random guest
+    displayNameInput.value = localStorage.getItem('displayName') || me.name;
 
-// UI: rooms
-function addDefaultRooms(){
-  ['general','friends','music','random'].forEach(r => addRoomButton(r));
-}
-function addRoomButton(room){
-  const b = document.createElement('button');
-  b.className = 'room';
-  b.innerHTML = '<div class="dot">' + room[0].toUpperCase() + '</div><div style="flex:1;text-align:left;padding-left:8px">'+ room +'</div>';
-  b.addEventListener('click', ()=> switchRoom(room));
-  roomsEl.appendChild(b);
-}
-newRoomBtn.addEventListener('click', ()=>{
-  const r = prompt('Room name (short):','room_' + Math.random().toString(36).slice(2,6));
-  if(!r) return;
-  addRoomButton(r);
-  switchRoom(r);
-});
+    // Save display name locally
+    saveNameBtn.onclick = () => {
+      const val = displayNameInput.value.trim();
+      if (val.length > 0) {
+        me.name = val;
+        localStorage.setItem('displayName', val);
+        alert('Name saved as "' + val + '"');
+      }
+    };
 
-function switchRoom(room){
-  currentRoom = room;
-  roomTitleEl.innerText = room;
-  roomAvatar.innerText = room[0].toUpperCase();
-  roomSubtitle.innerText = 'Realtime • ' + room;
-  Array.from(roomsEl.children).forEach(ch => ch.classList.toggle('active', ch.innerText.toLowerCase().includes(room.toLowerCase())));
-  if(typeof unsubscribeMessages === 'function') unsubscribeMessages();
-  subscribeMessages(room);
-}
-
-// Chat subscription
-function subscribeMessages(room){
-  const q = db.collection('messages').where('room','==',room).orderBy('createdAt','asc').limit(1000);
-  unsubscribeMessages = q.onSnapshot(snap => {
-    messagesEl.innerHTML = '';
-    snap.forEach(doc => renderMessage(doc.id, doc.data()));
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }, err => {
-    console.error('messages listener', err);
-    statusText.innerText = 'Listener error';
-  });
-}
-
-function renderMessage(id, m){
-  const el = document.createElement('div');
-  el.className = 'msg ' + (m.senderId === me.uid ? 'me' : '');
-  const meta = document.createElement('div'); meta.className = 'meta';
-  const when = m.createdAt && m.createdAt.toDate ? m.createdAt.toDate().toLocaleString() : new Date().toLocaleString();
-  meta.innerText = (m.senderName || shorten(m.senderId)) + ' • ' + when;
-  el.appendChild(meta);
-  if(m.text) {
-    const t = document.createElement('div'); t.innerText = m.text; el.appendChild(t);
-  }
-  if(m.attachment){
-    if(isYouTubeUrl(m.attachment)){
-      const iframe = document.createElement('iframe');
-      iframe.width = '320'; iframe.height = '180'; iframe.frameBorder = 0;
-      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-      iframe.src = youtubeEmbedUrl(m.attachment);
-      el.appendChild(iframe);
-    } else if(isImageUrl(m.attachment)){
-      const img = document.createElement('img'); img.src = m.attachment; img.style.maxWidth='320px'; img.style.borderRadius='8px'; img.style.marginTop='8px';
-      img.addEventListener('click', ()=> openMiniPlayer(m.attachment, (m.text||m.senderName||'Media')));
-      el.appendChild(img);
-    } else {
-      const a = document.createElement('a'); a.href = m.attachment; a.innerText = 'Open link'; a.target = '_blank'; el.appendChild(a);
-    }
-  }
-  messagesEl.appendChild(el);
-}
-
-// helpers
-function isImageUrl(url){ return url && url.match(/\\.(jpeg|jpg|gif|png|webp|bmp)(\\?.*)?$/i); }
-function isYouTubeUrl(url){ return url && (url.includes('youtube.com') || url.includes('youtu.be')); }
-function youtubeEmbedUrl(url){
-  try{
-    const u = new URL(url);
-    if(u.hostname.includes('youtu.be')) return 'https://www.youtube.com/embed/' + u.pathname.slice(1);
-    const id = u.searchParams.get('v'); return 'https://www.youtube.com/embed/' + id;
-  }catch(e){ return url; }
-}
-function shorten(id){ return id ? id.slice(0,8) : 'unknown'; }
-
-// send message
-sendBtn.addEventListener('click', sendMessage);
-msgInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') sendMessage(); });
-
-async function sendMessage(){
-  const text = msgInput.value.trim();
-  const attachment = attachUrl.value.trim() || null;
-  if(!text && !attachment) return;
-  sendBtn.disabled = true;
-  try {
-    await db.collection('messages').add({
-      room: currentRoom,
-      text: text || null,
-      attachment: attachment || null,
-      senderId: me.uid,
-      senderName: me.name,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    // Enable send button only if input is non-empty
+    msgText.addEventListener('input', () => {
+      sendBtn.disabled = msgText.value.trim() === '';
     });
-    msgInput.value = ''; attachUrl.value = '';
-  } catch(err){
-    console.error(err); alert('Send failed: ' + err.message);
-  } finally { sendBtn.disabled = false; }
-}
+    sendBtn.disabled = true;
 
-// Feed subscription
-function subscribeFeed(){
-  const q = db.collection('posts').orderBy('createdAt','desc').limit(200);
-  unsubscribeFeed = q.onSnapshot(snap => {
-    feedEl.innerHTML = '';
-    snap.forEach(doc => renderPost(doc.id, doc.data()));
-  }, err => console.error('feed listener', err));
-}
-subscribeFeed();
-
-function renderPost(id,p){
-  const card = document.createElement('div'); card.className = 'post';
-  if(p.mediaUrl){
-    const m = document.createElement('div'); m.className = 'media';
-    if(isYouTubeUrl(p.mediaUrl)){
-      const iframe = document.createElement('iframe');
-      iframe.width='100%'; iframe.height='100%'; iframe.src = youtubeEmbedUrl(p.mediaUrl); iframe.frameBorder=0;
-      m.appendChild(iframe);
-    } else if(isImageUrl(p.mediaUrl)){
-      const img = document.createElement('img'); img.src = p.mediaUrl; img.style.width='100%'; img.style.height='100%';
-      img.addEventListener('click', ()=> openMiniPlayer(p.mediaUrl, p.title || 'Post'));
-      m.appendChild(img);
-    } else {
-      const a = document.createElement('a'); a.href = p.mediaUrl; a.innerText='Open media'; a.target='_blank'; m.appendChild(a);
-    }
-    card.appendChild(m);
-  }
-  const meta = document.createElement('div'); meta.className = 'meta';
-  const title = document.createElement('h4'); title.innerText = p.title || 'Untitled';
-  const caption = document.createElement('p'); caption.innerText = p.caption || '';
-  const by = document.createElement('div'); by.className = 'muted'; by.innerText = (p.authorName || shorten(p.authorId)) + ' • ' + (p.createdAt && p.createdAt.toDate ? p.createdAt.toDate().toLocaleString() : '');
-  meta.appendChild(title); meta.appendChild(caption); meta.appendChild(by);
-  card.appendChild(meta);
-  feedEl.appendChild(card);
-}
-
-// create post
-createPostBtn.addEventListener('click', async ()=>{
-  const mediaUrl = postUrlInput.value.trim() || null;
-  if(!mediaUrl) return alert('Paste a public image URL or YouTube link to post');
-  createPostBtn.disabled = true;
-  try{
-    await db.collection('posts').add({
-      mediaUrl,
-      title: '',
-      caption: '',
-      authorId: me.uid,
-      authorName: me.name,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    // Sign in anonymously
+    signInAnonymously(auth).catch((err) => {
+      alert('Anonymous sign-in failed: ' + err.message);
+      console.error(err);
     });
-    postUrlInput.value = '';
-  }catch(err){ console.error(err); alert('Post failed: ' + err.message); }
-  createPostBtn.disabled = false;
-});
 
-// UI toggles
-openFeedBtn.addEventListener('click', ()=> {
-  document.querySelectorAll('.panel').forEach(p=> p.style.display='none');
-  // show feed panel (right)
-  document.querySelectorAll('.content .panel')[1].style.display='flex';
-});
-openChatBtn.addEventListener('click', ()=> {
-  document.querySelectorAll('.panel').forEach(p=> p.style.display='flex');
-  document.querySelectorAll('.content .panel')[1].style.display='flex';
-});
+    // On auth state changed
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        me.uid = user.uid;
+        console.log('Signed in as:', me.uid);
+        startListeningMessages();
+      } else {
+        console.log('Signed out');
+        messagesEl.innerHTML = 'Please wait, signing in...';
+      }
+    });
 
-// Search filter
-globalSearch.addEventListener('input', e=>{
-  const q = e.target.value.trim().toLowerCase();
-  Array.from(feedEl.children).forEach(card=>{
-    const txt = (card.innerText || '').toLowerCase();
-    card.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
-  });
-  Array.from(messagesEl.children).forEach(m=>{
-    const txt = (m.innerText || '').toLowerCase();
-    m.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
-  });
-});
+    // Listen for messages
+    function startListeningMessages() {
+      const q = query(collection(db, 'messages'), orderBy('createdAt', 'asc'));
 
-// mini player
-function openMiniPlayer(url, title){
-  miniPlayer.classList.remove('hidden');
-  miniTitle.innerText = title || 'Media';
-  if(isYouTubeUrl(url)){
-    // embed youtube inside video area via iframe fallback
-    miniVideo.pause();
-    miniVideo.classList.add('hidden');
-    // create iframe
-    const existing = miniPlayer.querySelector('iframe');
-    if(existing) existing.remove();
-    const iframe = document.createElement('iframe');
-    iframe.width = '100%'; iframe.height='100%'; iframe.src = youtubeEmbedUrl(url);
-    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-    iframe.style.width='140px'; iframe.style.height='80px'; iframe.style.borderRadius='8px';
-    miniPlayer.insertBefore(iframe, miniPlayer.children[1]);
-  } else if(isImageUrl(url)){
-    // show image in video area (use <img>)
-    miniVideo.classList.add('hidden');
-    const existingImg = miniPlayer.querySelector('img');
-    if(existingImg) existingImg.remove();
-    const img = document.createElement('img');
-    img.src = url; img.style.width='140px'; img.style.height='80px'; img.style.objectFit='cover'; img.style.borderRadius='8px';
-    miniPlayer.insertBefore(img, miniPlayer.children[1]);
-  } else {
-    // try to load as video
-    miniPlayer.querySelectorAll('iframe,img').forEach(n=>n.remove());
-    miniVideo.classList.remove('hidden');
-    miniVideo.src = url;
-    miniVideo.play().catch(()=>{ /* autoplay blocked */ });
-  }
-}
-miniClose.addEventListener('click', ()=> {
-  miniPlayer.classList.add('hidden');
-  miniVideo.pause(); miniVideo.src = '';
-  miniPlayer.querySelectorAll('iframe,img').forEach(n=>n.remove());
-});
+      onSnapshot(
+        q,
+        (snapshot) => {
+          messagesEl.innerHTML = '';
+          snapshot.forEach((doc) => {
+            const m = doc.data();
+            renderMessage(m);
+          });
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        },
+        (err) => {
+          console.error('Listen failed:', err);
+          messagesEl.innerHTML = 'Failed to load messages.';
+        }
+      );
+    }
 
-// utility
-function uid(p='id'){ return p + '_' + Math.random().toString(36).slice(2,9); }
-function now(){ return Date.now(); }
+    // Render message bubble
+    function renderMessage(m) {
+      const div = document.createElement('div');
+      div.className = 'msg' + (m.senderId === me.uid ? ' me' : '');
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const time = m.createdAt && m.createdAt.toDate ? m.createdAt.toDate().toLocaleTimeString() : '';
+      meta.textContent = `${m.senderName || m.senderId} • ${time}`;
+      div.appendChild(meta);
+      const text = document.createElement('div');
+      text.textContent = m.text || '';
+      div.appendChild(text);
+      messagesEl.appendChild(div);
+    }
 
-// simple shorten display name
-(function askName(){
-  const n = localStorage.getItem('ict_display') || '';
-  if(n) { me.name = n; return; }
-  const s = prompt('Display name (optional):','Guest' + Math.floor(Math.random()*999));
-  if(s){ me.name = s; localStorage.setItem('ict_display', s); me.name = s; }
-})();
+    // Send message on button or enter key
+    sendBtn.onclick = sendMessage;
+    msgText.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !sendBtn.disabled) {
+        sendMessage();
+      }
+    });
 
-function startSubscriptions(){
-  subscribeMessages(currentRoom);
-  subscribeFeed();
-}
+    async function sendMessage() {
+      const text = msgText.value.trim();
+      if (text === '') return;
 
-startSubscriptions();
+      sendBtn.disabled = true;
 
-</script>
+      try {
+        await addDoc(collection(db, 'messages'), {
+          text,
+          senderId: me.uid,
+          senderName: me.name,
+          createdAt: serverTimestamp(),
+        });
+        msgText.value = '';
+        sendBtn.disabled = true;
+      } catch (e) {
+        alert('Failed to send message: ' + e.message);
+        console.error(e);
+      }
+
+      sendBtn.disabled = false;
+    }
+  </script>
 </body>
 </html>
