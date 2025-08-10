@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>WhatChat</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
 <style>
@@ -48,14 +48,14 @@
   }
   body {
     margin: 0;
-    font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+    font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
     background: var(--bg);
     color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 18px;
-    height: 100vh;
+    padding: 12px;
+    min-height: 100vh;
     transition: background 0.3s, color 0.3s;
   }
   .app {
@@ -165,6 +165,59 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Responsive tweaks for mobile */
+  @media (max-width: 600px) {
+    body {
+      padding: 8px;
+    }
+    .app {
+      height: 90vh;
+      padding: 8px;
+    }
+    .card {
+      padding: 8px;
+    }
+    .top-bar {
+      gap: 6px;
+    }
+    #displayName {
+      flex-basis: 100%;
+      font-size: 1rem;
+      padding: 8px;
+    }
+    #saveNameBtn, #toggleModeBtn {
+      flex: 1 1 45%;
+      min-width: 120px;
+      padding: 10px;
+      font-size: 1rem;
+    }
+    #messages {
+      font-size: 1rem;
+      padding: 8px;
+    }
+    .msg {
+      max-width: 85%;
+      font-size: 1rem;
+      padding: 10px 14px;
+    }
+    .composer {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    #msgText {
+      flex: 1 1 100%;
+      font-size: 1.1rem;
+      padding: 10px;
+    }
+    #sendBtn {
+      flex: 1 1 100%;
+      font-size: 1.1rem;
+      min-width: unset;
+      padding: 12px;
+    }
   }
 </style>
 </head>
@@ -172,7 +225,7 @@
   <div class="app">
     <div class="card">
       <div class="top-bar">
-        <input id="displayName" placeholder="Your display name (optional)" />
+        <input id="displayName" placeholder="Your display name (optional)" autocomplete="off" />
         <button id="saveNameBtn">Save Name</button>
         <button id="toggleModeBtn" aria-label="Toggle light/dark mode">Light Mode</button>
       </div>
